@@ -21,7 +21,7 @@ const HelloWorldIntentHandler = {
             && Alexa.getIntentName(handlerInput.requestEnvelope) === 'HelloWorldIntent';
     },
     handle(handlerInput) {
-    const speakOutput = 'Hello World?';
+        const speakOutput = 'Hello World?';
         return handlerInput.responseBuilder
             .speak(speakOutput)
             .reprompt(speakOutput)
@@ -93,7 +93,7 @@ const ErrorHandler = {
     },
     handle(handlerInput, error) {
         console.log(`~~~~ Error handled: ${error.stack}`);
-        const speakOutput = `Sorry, I had trouble doing what you asked. Please try again.`;
+        const speakOutput = 'Sorry, I had trouble doing what you asked. Please try again.';
 
         return handlerInput.responseBuilder
             .speak(speakOutput)
@@ -110,4 +110,4 @@ module.exports = {
     HelloWorldIntentHandler,
     HelpIntentHandler,
     LaunchRequestHandler,
-}
+};

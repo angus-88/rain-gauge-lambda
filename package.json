@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "deploy": "./deploy.sh"
   },
   "repository": {
     "type": "git",
@@ -18,6 +18,8 @@
   "dependencies": {
     "ask-sdk": "^2.9.0"
   },
-  "devDependencies": {},
+  "devDependencies": {
+    "eslint": "^7.7.0"
+  },
   "description": ""
 }
