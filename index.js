@@ -21,6 +21,7 @@ const AddRainHandler = {
       await addRain(amount);
       response = `Successfully added ${amount} to the rain gauge`;
     } catch (e) {
+      console.error(e.message);
       response = e.message;
     }
 

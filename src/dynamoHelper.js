@@ -2,7 +2,13 @@ const moment = require('moment');
 const AWS = require('aws-sdk');
 const documentClient = new AWS.DynamoDB.DocumentClient();
 
-const TABLE_NAME = 'rain-tally';
+let TABLE_NAME = 'rain-tally';
+if (process.env.RAIN_ENV === 'dev') {
+  console.log('Using dev table');
+  TABLE_NAME = 'rain-tally-dev';
+} else {
+  console.log('Using prod table');
+}
 
 const getAllRainRecords = async () => {
   const data = await documentClient.scan({
@@ -13,7 +19,8 @@ const getAllRainRecords = async () => {
 };
 
 const addRain = async (spokenAmount) => {
-  const timestamp = moment().format('DD/MM/YYYY hh:mm:ss A');
+  const currentTime = moment();
+  const timestamp = currentTime.format('DD/MM/YYYY hh:mm:ss A');
   console.log('timestamp: ', timestamp);
   
   const amount = Number.parseInt(spokenAmount, 10);
@@ -26,12 +33,14 @@ const addRain = async (spokenAmount) => {
   const data = await documentClient.put({
     TableName: TABLE_NAME,
     Item: {
-      date: timestamp,
+      date: currentTime.unix(),
+      timestamp,
       amount: amount
     }
   }).promise();
 
   console.log(data);
+  console.log('Successfully added rain');
   return data;
 };
 
