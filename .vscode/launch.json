@@ -1,0 +1,11 @@
+{
+  "configurations": [
+    {
+      "type": "pwa-node",
+      "name": "Dyamo Rain Functions",
+      "request": "launch",
+      "program": "${workspaceFolder}/src/dynamoHelper.js",
+      "env": {"DEBUG_RAIN": "true", "RAIN_ENV": "dev"}
+    }
+  ]
+}
