@@ -1,6 +1,6 @@
 const Alexa = require('ask-sdk');
 
-const dynamoService = require('../dynamoHelper');
+const dynamoService = require('../dynamoHelper.ts');
 
 const { addRain, getTotalForCurrentMonth } = dynamoService;
 

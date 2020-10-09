@@ -1,11 +1,22 @@
 {
   "configurations": [
     {
-      "type": "pwa-node",
-      "name": "Dyamo Rain Functions",
+      "name": "Launch Program",
+      "program": "${workspaceFolder}/app.js",
       "request": "launch",
-      "program": "${workspaceFolder}/src/dynamoHelper.js",
-      "env": {"DEBUG_RAIN": "true", "RAIN_ENV": "dev"}
+      "skipFiles": [
+        "<node_internals>/**"
+      ],
+      "type": "pwa-node"
+    },
+    
+    {
+      "name": "Dynamo Helper",
+      "program": "${workspaceFolder}/src/dynamoHelper.ts",
+      "request": "launch",
+      "preLaunchTask": "tsc: build - tsconfig.json",
+      "outFiles": ["${workspaceFolder}/out/**/*.js"]
     }
+    
   ]
 }

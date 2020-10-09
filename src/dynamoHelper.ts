@@ -1,6 +1,5 @@
-// @ts-check
-const moment = require('moment');
-const AWS = require('aws-sdk');
+import moment, { Moment } from 'moment';
+import AWS from 'aws-sdk';
 const documentClient = new AWS.DynamoDB.DocumentClient();
 
 let TABLE_NAME = 'rain-gauge';
@@ -19,7 +18,7 @@ const getAllRainRecords = async () => {
   return data;
 };
 
-const getBetweenMoments = async (begin, end) => {
+const getBetweenMoments = async (begin: Moment, end: Moment) => {
   const data = await documentClient.query({
     TableName: TABLE_NAME,
     KeyConditions: {
@@ -40,13 +39,13 @@ const getBetweenMoments = async (begin, end) => {
   return data.Items;
 };
 
-const getTotalForMonth = async (date) => {
+const getTotalForMonth = async (date: Moment) => {
   console.log(date.format());
   const startOfMonth = moment(date).startOf('month');
   const endOfMonth = moment(date).endOf('month');
   const items = await getBetweenMoments(startOfMonth, endOfMonth);
 
-  const total = items.reduce((currentTotal, rainRecord) => currentTotal + rainRecord.amount, 0);
+  const total = items?.reduce((currentTotal, rainRecord) => currentTotal + rainRecord.amount, 0);
 
   console.log(total);
   return total;
@@ -56,7 +55,7 @@ const getTotalForCurrentMonth = async () => {
   return await getTotalForMonth(moment());
 };
 
-const addRain = async (spokenAmount) => {
+const addRain = async (spokenAmount: string) => {
   const currentTime = moment();
   const timestamp = currentTime.format('DD/MM/YYYY hh:mm:ss A');
   console.log('Adding rain at timestamp: ', timestamp);
