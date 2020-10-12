@@ -1,6 +1,6 @@
 const Alexa = require('ask-sdk');
 
-const dynamoService = require('../dynamoHelper.ts');
+const dynamoService = require('../dynamoHelper');
 
 const { addRain, getTotalForCurrentMonth } = dynamoService;
 
@@ -37,7 +37,7 @@ const GetRainForMonth = {
     const total = await getTotalForCurrentMonth();
 
     return handlerInput.responseBuilder
-      .speak(`This month it has rained ${total} millimeters`)
+      .speak(`This month it has rained ${total} millimetres`)
       .getResponse();
   }
 };
