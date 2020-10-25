@@ -1,5 +1,5 @@
 import moment, { Moment } from 'moment';
-import AWS from 'aws-sdk';
+import * as AWS from 'aws-sdk';
 import { getTotalFromItems } from './utilities';
 const documentClient = new AWS.DynamoDB.DocumentClient();
 

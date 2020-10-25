@@ -1,15 +1,19 @@
-const Alexa = require('ask-sdk');
+import { HandlerInput } from 'ask-sdk';
+import { IntentRequest } from 'ask-sdk-model'; 
 
-const { addRain, getTotalForCurrentDay, getTotalForCurrentMonth } = require('../dynamoHelper');
+import * as Alexa from 'ask-sdk';
+
+import { addRain, getTotalForCurrentDay, getTotalForCurrentMonth } from '../dynamoHelper';
 
 const AddRainHandler = {
-  canHandle(handlerInput) {
+  canHandle(handlerInput: HandlerInput) {
+    console.log(Alexa);
     return Alexa.getRequestType(handlerInput.requestEnvelope) === 'IntentRequest'
       && Alexa.getIntentName(handlerInput.requestEnvelope) === 'AddRain';
   },
-  async handle(handlerInput) {
+  async handle(handlerInput: HandlerInput) {
     console.log(JSON.stringify(handlerInput, null, 2));
-    const request = Alexa.getRequest(handlerInput.requestEnvelope);
+    const request = Alexa.getRequest<IntentRequest>(handlerInput.requestEnvelope);
     const amount = request.intent.slots?.amount.value || '0';
     let response = '';
     try {
@@ -28,11 +32,12 @@ const AddRainHandler = {
 };
 
 const GetRainForMonth = {
-  canHandle(handlerInput) {
+  canHandle(handlerInput: HandlerInput) {
+    console.log(Alexa);
     return Alexa.getRequestType(handlerInput.requestEnvelope) === 'IntentRequest'
       && Alexa.getIntentName(handlerInput.requestEnvelope) === 'RainForMonth';
   },
-  async handle(handlerInput) {
+  async handle(handlerInput: HandlerInput) {
     const total = await getTotalForCurrentMonth();
 
     return handlerInput.responseBuilder
@@ -42,11 +47,12 @@ const GetRainForMonth = {
 };
 
 const GetRainForToday = {
-  canHandle(handlerInput) {
+  canHandle(handlerInput: HandlerInput) {
+    console.log(Alexa);
     return Alexa.getRequestType(handlerInput.requestEnvelope) === 'IntentRequest'
       && Alexa.getIntentName(handlerInput.requestEnvelope) === 'RainForToday';
   },
-  async handle(handlerInput) {
+  async handle(handlerInput: HandlerInput) {
     const total = await getTotalForCurrentDay();
 
     return handlerInput.responseBuilder
