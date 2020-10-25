@@ -1,4 +1,4 @@
-import moment, { Moment } from 'moment';
+import moment, { Moment, unitOfTime } from 'moment';
 import * as AWS from 'aws-sdk';
 import { getTotalFromItems } from './utilities';
 const documentClient = new AWS.DynamoDB.DocumentClient();
@@ -40,32 +40,18 @@ export const getBetweenMoments = async (begin: Moment, end = moment()) => {
   return data.Items;
 };
 
-export const getTotalForMonth = async (date: Moment) => {
-  console.log(date.format());
-  const startOfMonth = moment(date).startOf('month');
-  const endOfMonth = moment(date).endOf('month');
-  const items = await getBetweenMoments(startOfMonth, endOfMonth);
 
+export const getTotalForTimeFrame = async (date: Moment, timeFrame: unitOfTime.StartOf) => {
+  console.log(date.format());
+  const startOfMonth = moment(date).startOf(timeFrame);
+  const endOfMonth = moment(date).endOf(timeFrame);
+  const items = await getBetweenMoments(startOfMonth, endOfMonth);
+  
   const total = getTotalFromItems(items || []);
   
-  console.log('total: ', total);
+  console.log(`${timeFrame} total: ${total}`);
   return total;
 };
-
-export const getTotalForCurrentMonth = async () => {
-  return await getTotalForMonth(moment());
-};
-
-export const getTotalForCurrentDay = async () => {
-  const startofDay = moment().startOf('day');
-
-  const todayItems = await getBetweenMoments(startofDay);
-
-  const total = getTotalFromItems(todayItems || []);
-
-  console.log('total: ', total);
-  return total;
-}
 
 export const addRain = async (spokenAmount: string) => {
   const currentTime = moment();
@@ -95,5 +81,7 @@ export const addRain = async (spokenAmount: string) => {
 };
 
 if (process.env.DEBUG_RAIN === 'true') {
-  getTotalForCurrentDay();
+  getTotalForTimeFrame(moment(), 'day');
+  getTotalForTimeFrame(moment(), 'month');
+  getTotalForTimeFrame(moment(), 'year');
 }
