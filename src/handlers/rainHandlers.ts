@@ -1,7 +1,7 @@
 import Alexa, { getRequest } from 'ask-sdk';
 import { IntentRequest } from 'ask-sdk-model';
 
-import { addRain, getTotalForCurrentMonth } from '../dynamoHelper';
+import { addRain, getTotalForCurrentDay, getTotalForCurrentMonth } from '../dynamoHelper';
 
 const AddRainHandler = {
   canHandle(handlerInput: Alexa.HandlerInput) {
@@ -41,6 +41,20 @@ const GetRainForMonth = {
       .getResponse();
   }
 };
+
+const GetRainForToday = {
+  canHandle(handlerInput: Alexa.HandlerInput) {
+    return Alexa.getRequestType(handlerInput.requestEnvelope) === 'IntentRequest'
+      && Alexa.getIntentName(handlerInput.requestEnvelope) === 'RainForToday';
+  },
+  async handle(handlerInput: Alexa.HandlerInput) {
+    const total = await getTotalForCurrentDay();
+
+    return handlerInput.responseBuilder
+      .speak(`Today it has rained ${total} millimetres`)
+      .getResponse();
+  }
+}
 
 module.exports = {
   AddRainHandler,
