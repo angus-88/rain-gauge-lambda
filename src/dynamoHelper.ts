@@ -6,7 +6,7 @@ const documentClient = new AWS.DynamoDB.DocumentClient();
 let TABLE_NAME = 'rain-gauge';
 if (process.env.RAIN_ENV === 'dev') {
   console.log('Using dev table');
-  // TABLE_NAME = 'rain-gauge-dev';
+  TABLE_NAME = 'rain-gauge-dev';
 } else {
   console.log('Using prod table');
 }
