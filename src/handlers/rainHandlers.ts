@@ -1,17 +1,17 @@
-const Alexa = require('ask-sdk');
+import Alexa, { getRequest } from 'ask-sdk';
+import { IntentRequest } from 'ask-sdk-model';
 
-const dynamoService = require('../dynamoHelper');
-
-const { addRain, getTotalForCurrentMonth } = dynamoService;
+import { addRain, getTotalForCurrentMonth } from '../dynamoHelper';
 
 const AddRainHandler = {
-  canHandle(handlerInput) {
+  canHandle(handlerInput: Alexa.HandlerInput) {
     return Alexa.getRequestType(handlerInput.requestEnvelope) === 'IntentRequest'
       && Alexa.getIntentName(handlerInput.requestEnvelope) === 'AddRain';
   },
-  async handle(handlerInput) {
+  async handle(handlerInput: Alexa.HandlerInput) {
     console.log(JSON.stringify(handlerInput, null, 2));
-    const amount = handlerInput.requestEnvelope.request.intent.slots.amount.value;
+    const request = getRequest<IntentRequest>(handlerInput.requestEnvelope);
+    const amount = request.intent.slots?.amount.value || '0';
     let response = '';
     try {
 
@@ -29,15 +29,15 @@ const AddRainHandler = {
 };
 
 const GetRainForMonth = {
-  canHandle(handlerInput) {
+  canHandle(handlerInput: Alexa.HandlerInput) {
     return Alexa.getRequestType(handlerInput.requestEnvelope) === 'IntentRequest'
       && Alexa.getIntentName(handlerInput.requestEnvelope) === 'RainForMonth';
   },
-  async handle(handlerInput) {
+  async handle(handlerInput: Alexa.HandlerInput) {
     const total = await getTotalForCurrentMonth();
 
     return handlerInput.responseBuilder
-      .speak(`This month it has rained ${total} millimeters`)
+      .speak(`This month it has rained ${total} millimetres`)
       .getResponse();
   }
 };
@@ -45,4 +45,4 @@ const GetRainForMonth = {
 module.exports = {
   AddRainHandler,
   GetRainForMonth,
-};
+}

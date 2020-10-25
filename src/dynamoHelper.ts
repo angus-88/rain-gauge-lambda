@@ -1,6 +1,6 @@
-// @ts-check
-const moment = require('moment');
-const AWS = require('aws-sdk');
+import moment, { Moment } from 'moment';
+import AWS from 'aws-sdk';
+import { getTotalFromItems } from './utilities';
 const documentClient = new AWS.DynamoDB.DocumentClient();
 
 let TABLE_NAME = 'rain-gauge';
@@ -11,7 +11,7 @@ if (process.env.RAIN_ENV === 'dev') {
   console.log('Using prod table');
 }
 
-const getAllRainRecords = async () => {
+export const getAllRainRecords = async () => {
   const data = await documentClient.scan({
     TableName: TABLE_NAME,
   }).promise();
@@ -19,7 +19,7 @@ const getAllRainRecords = async () => {
   return data;
 };
 
-const getBetweenMoments = async (begin, end) => {
+export const getBetweenMoments = async (begin: Moment, end = moment()) => {
   const data = await documentClient.query({
     TableName: TABLE_NAME,
     KeyConditions: {
@@ -40,23 +40,34 @@ const getBetweenMoments = async (begin, end) => {
   return data.Items;
 };
 
-const getTotalForMonth = async (date) => {
+export const getTotalForMonth = async (date: Moment) => {
   console.log(date.format());
   const startOfMonth = moment(date).startOf('month');
   const endOfMonth = moment(date).endOf('month');
   const items = await getBetweenMoments(startOfMonth, endOfMonth);
 
-  const total = items.reduce((currentTotal, rainRecord) => currentTotal + rainRecord.amount, 0);
-
-  console.log(total);
+  const total = getTotalFromItems(items || []);
+  
+  console.log('total: ', total);
   return total;
 };
 
-const getTotalForCurrentMonth = async () => {
+export const getTotalForCurrentMonth = async () => {
   return await getTotalForMonth(moment());
 };
 
-const addRain = async (spokenAmount) => {
+export const getTotalForCurrentDay = async () => {
+  const startofDay = moment().startOf('day');
+
+  const todayItems = await getBetweenMoments(startofDay);
+
+  const total = getTotalFromItems(todayItems || []);
+
+  console.log('total: ', total);
+  return total;
+}
+
+export const addRain = async (spokenAmount: string) => {
   const currentTime = moment();
   const timestamp = currentTime.format('DD/MM/YYYY hh:mm:ss A');
   console.log('Adding rain at timestamp: ', timestamp);
@@ -84,13 +95,5 @@ const addRain = async (spokenAmount) => {
 };
 
 if (process.env.DEBUG_RAIN === 'true') {
-  getTotalForCurrentMonth();
+  getTotalForCurrentDay();
 }
-
-module.exports ={
-  getAllRainRecords,
-  addRain,
-  getTotalForCurrentMonth,
-  getTotalForMonth,
-  getBetweenMoments,
-};
