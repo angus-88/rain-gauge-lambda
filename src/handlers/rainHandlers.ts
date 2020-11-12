@@ -13,7 +13,6 @@ const AddRainHandler = {
       && Alexa.getIntentName(handlerInput.requestEnvelope) === 'AddRain';
   },
   async handle(handlerInput: HandlerInput) {
-    console.log(JSON.stringify(handlerInput, null, 2));
     const request = Alexa.getRequest<IntentRequest>(handlerInput.requestEnvelope);
     const amount = request.intent.slots?.amount.value || '0';
     let response = '';
@@ -34,7 +33,6 @@ const AddRainHandler = {
 
 const GetRainForToday = {
   canHandle(handlerInput: HandlerInput) {
-    console.log(Alexa);
     return Alexa.getRequestType(handlerInput.requestEnvelope) === 'IntentRequest'
       && Alexa.getIntentName(handlerInput.requestEnvelope) === 'RainForToday';
   },
@@ -50,7 +48,6 @@ const GetRainForToday = {
 
 const GetRainForMonth = {
   canHandle(handlerInput: HandlerInput) {
-    console.log(Alexa);
     return Alexa.getRequestType(handlerInput.requestEnvelope) === 'IntentRequest'
       && Alexa.getIntentName(handlerInput.requestEnvelope) === 'RainForMonth';
   },
@@ -81,9 +78,36 @@ const GetRainForYear = {
   }
 };
 
+const GetRainForPreviousMonth = {
+  canHandle(handlerInput: HandlerInput) {
+    return Alexa.getRequestType(handlerInput.requestEnvelope) === 'IntentRequest'
+      && Alexa.getIntentName(handlerInput.requestEnvelope) === 'RainForPreviousMonth';
+  },
+  async handle(handlerInput: HandlerInput) {
+    const request = Alexa.getRequest<IntentRequest>(handlerInput.requestEnvelope);
+    const month = request.intent.slots?.month.value || '';
+
+    console.log(month);
+
+    const monthMoment = moment().month(month).startOf('month');
+
+    if (monthMoment.isAfter()) {
+      monthMoment.subtract(1, 'year');
+    }
+
+    console.log('monthMoment: ', monthMoment.toISOString());
+    const total = await getTotalForTimeFrame(monthMoment, 'month');
+
+    return handlerInput.responseBuilder
+      .speak(`The total in ${month} ${monthMoment.format('YYYY')} was ${total} millimetres`)
+      .getResponse();
+  }
+}
+
 module.exports = {
   AddRainHandler,
   GetRainForYear,
   GetRainForMonth,
-  GetRainForToday
+  GetRainForToday,
+  GetRainForPreviousMonth,
 };
