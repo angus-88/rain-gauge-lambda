@@ -1,6 +1,6 @@
 import moment, { Moment, unitOfTime } from 'moment';
 import * as AWS from 'aws-sdk';
-import { getTotalFromItems } from './utilities';
+import { getTotalFromItems, groupRecordsByTimeSpan } from './utilities';
 const documentClient = new AWS.DynamoDB.DocumentClient();
 
 let TABLE_NAME = 'rain-gauge';
@@ -39,7 +39,6 @@ export const getBetweenMoments = async (begin: Moment, end = moment()) => {
   
   return data.Items;
 };
-
 
 export const getTotalForTimeFrame = async (date: Moment, timeFrame: unitOfTime.StartOf) => {
   console.log(date.format());
@@ -81,7 +80,22 @@ export const addRain = async (spokenAmount: string) => {
 };
 
 if (process.env.DEBUG_RAIN === 'true') {
-  getTotalForTimeFrame(moment(), 'day');
-  getTotalForTimeFrame(moment(), 'month');
-  getTotalForTimeFrame(moment(), 'year');
+  // getTotalForTimeFrame(moment(), 'day');
+  // getTotalForTimeFrame(moment(), 'month');
+  // getTotalForTimeFrame(moment(), 'year');
+
+  const test = async () => {
+    const allRain = await getAllRainRecords();
+  
+      const totals = groupRecordsByTimeSpan(allRain.Items || [], 'year'); 
+      console.log('totals: ', totals);
+      
+      totals.sort((first, second) => second.total - first.total);
+  
+      const wettestDate = totals[0].date.format('dddd Do MMMM YYYY');
+      console.log('wettestDate: ', `${wettestDate} with ${totals[0].total}`);
+  }
+
+  test();
+
 }

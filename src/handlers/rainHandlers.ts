@@ -4,11 +4,11 @@ import moment from 'moment';
 
 import * as Alexa from 'ask-sdk';
 
-import { addRain, getTotalForTimeFrame } from '../dynamoHelper';
+import { addRain, getAllRainRecords, getTotalForTimeFrame } from '../dynamoHelper';
+import { groupRecordsByTimeSpan } from '../utilities';
 
 const AddRainHandler = {
   canHandle(handlerInput: HandlerInput) {
-    console.log(Alexa);
     return Alexa.getRequestType(handlerInput.requestEnvelope) === 'IntentRequest'
       && Alexa.getIntentName(handlerInput.requestEnvelope) === 'AddRain';
   },
@@ -17,9 +17,10 @@ const AddRainHandler = {
     const amount = request.intent.slots?.amount.value || '0';
     let response = '';
     try {
-
       await addRain(amount);
-      response = `Successfully added ${amount} to the rain gauge`;
+      const total = await getTotalForTimeFrame(moment(), 'day');
+
+      response = `Successfully added ${amount} millimeters, the total today is ${total}`;
     } catch (e) {
       console.error(e.message);
       response = e.message;
@@ -31,49 +32,20 @@ const AddRainHandler = {
   }
 };
 
-const GetRainForToday = {
+const GetRainForCurrentTimeSpan = {
   canHandle(handlerInput: HandlerInput) {
     return Alexa.getRequestType(handlerInput.requestEnvelope) === 'IntentRequest'
-      && Alexa.getIntentName(handlerInput.requestEnvelope) === 'RainForToday';
+      && Alexa.getIntentName(handlerInput.requestEnvelope) === 'RainForTimeSpan';
   },
   async handle(handlerInput: HandlerInput) {
     const today = moment();
-    const total = await getTotalForTimeFrame(today, 'day');
+    const request = Alexa.getRequest<IntentRequest>(handlerInput.requestEnvelope);
+    const timespan = request.intent.slots?.timespan.value as 'year' | 'month' | 'day';
+    const total = await getTotalForTimeFrame(today, timespan || 'year');
 
     return handlerInput.responseBuilder
-      .speak(`Today it has rained ${total} millimetres`)
-      .getResponse();
-  }
-};
-
-const GetRainForMonth = {
-  canHandle(handlerInput: HandlerInput) {
-    return Alexa.getRequestType(handlerInput.requestEnvelope) === 'IntentRequest'
-      && Alexa.getIntentName(handlerInput.requestEnvelope) === 'RainForMonth';
-  },
-  async handle(handlerInput: HandlerInput) {
-    const month = moment();
-    const total = await getTotalForTimeFrame(month, 'month');
-
-    return handlerInput.responseBuilder
-      .speak(`This month it has rained ${total} millimetres`)
-      .getResponse();
-  }
-};
-
-
-const GetRainForYear = {
-  canHandle(handlerInput: HandlerInput) {
-    console.log(Alexa);
-    return Alexa.getRequestType(handlerInput.requestEnvelope) === 'IntentRequest'
-      && Alexa.getIntentName(handlerInput.requestEnvelope) === 'RainForYear';
-  },
-  async handle(handlerInput: HandlerInput) {
-    const today = moment();
-    const total = await getTotalForTimeFrame(today, 'year');
-
-    return handlerInput.responseBuilder
-      .speak(`The total for this year is ${total} millimetres`)
+      .speak(`${timespan.includes('day') ? 'Today' : `This ${timespan}`} it has rained ${total} millimetres`)
+      .reprompt('any other rain questions')
       .getResponse();
   }
 };
@@ -85,9 +57,9 @@ const GetRainForPreviousMonth = {
   },
   async handle(handlerInput: HandlerInput) {
     const request = Alexa.getRequest<IntentRequest>(handlerInput.requestEnvelope);
-    const month = request.intent.slots?.month.value || '';
-
-    console.log(month);
+    const month = request.intent.slots?.month.value || moment().subtract(1, 'month').format('MMMM');
+    
+    console.log('month: ', month);
 
     const monthMoment = moment().month(month).startOf('month');
 
@@ -100,14 +72,54 @@ const GetRainForPreviousMonth = {
 
     return handlerInput.responseBuilder
       .speak(`The total in ${month} ${monthMoment.format('YYYY')} was ${total} millimetres`)
+      .reprompt('any other rain questions')
+      .getResponse();
+  }
+}
+
+const GetWettestTimeSpan = {
+  canHandle(handlerInput: HandlerInput) {
+    return Alexa.getRequestType(handlerInput.requestEnvelope) === 'IntentRequest'
+      && Alexa.getIntentName(handlerInput.requestEnvelope) === 'WettestTimeSpan';
+  },
+  async handle(handlerInput: HandlerInput) {
+    const request = Alexa.getRequest<IntentRequest>(handlerInput.requestEnvelope);
+    const timespan = request.intent.slots?.timespan.value as 'year' | 'month' | 'day';
+    console.log('timespan: ', timespan);
+
+    const allRain = await getAllRainRecords();
+
+    const totals = groupRecordsByTimeSpan(allRain.Items || [], timespan); 
+    
+    totals.sort((first, second) => second.total - first.total);
+    console.log('totals: ', totals);
+    let format = 'dddd Do MMMM YYYY';
+    switch (timespan) {
+      case 'day':
+        format = 'dddd Do MMMM YYYY';
+        break;
+      case 'month':
+        format = 'MMMM YYYY';
+        break;
+      case 'year':
+        format = 'YYYY';
+        break;
+      default:
+        format = 'dddd Do MMMM YYYY';
+        break;
+    }
+    const wettestDate = totals[0].date.format(format);
+
+    return handlerInput.responseBuilder
+      .speak(`The wettest ${timespan} was ${wettestDate} and it rained ${totals[0].total} millimeters`)
+      .reprompt('any other rain questions')
       .getResponse();
   }
 }
 
 module.exports = {
   AddRainHandler,
-  GetRainForYear,
-  GetRainForMonth,
-  GetRainForToday,
+  GetRainForCurrentTimeSpan,
   GetRainForPreviousMonth,
+  GetWettestTimeSpan,
 };

@@ -9,7 +9,7 @@ const LaunchRequestHandler = {
     return Alexa.getRequestType(handlerInput.requestEnvelope) === 'LaunchRequest';
   },
   handle(handlerInput) {
-    const speakOutput = 'Welcome to Springwells rain gauge, you can add rainfall or ask for the current months total';
+    const speakOutput = 'Welcome to Springwells rain gauge, ask me a question or ask for help.';
     return handlerInput.responseBuilder
       .speak(speakOutput)
       .reprompt(speakOutput)
@@ -22,7 +22,7 @@ const HelpIntentHandler = {
             && Alexa.getIntentName(handlerInput.requestEnvelope) === 'AMAZON.HelpIntent';
   },
   handle(handlerInput) {
-    const speakOutput = 'You can say add 10 millimeters to my rain gauge or how much has it rained this month';
+    const speakOutput = 'You can say add 10 millimeters to my rain gauge or ask for daily, month or year totals or records';
 
     return handlerInput.responseBuilder
       .speak(speakOutput)
