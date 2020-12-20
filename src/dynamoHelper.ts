@@ -34,17 +34,16 @@ export const getBetweenMoments = async (begin: Moment, end = moment()) => {
     }
   }).promise();
 
-  console.log(`Found ${data.Count} rain entries`);
-  console.log(data.Items);
+  console.log(`Found ${data.Count} rain entries between ${begin.toISOString()} and ${end.toISOString()}`);
   
   return data.Items;
 };
 
 export const getTotalForTimeFrame = async (date: Moment, timeFrame: unitOfTime.StartOf) => {
   console.log(date.format());
-  const startOfMonth = moment(date).startOf(timeFrame);
-  const endOfMonth = moment(date).endOf(timeFrame);
-  const items = await getBetweenMoments(startOfMonth, endOfMonth);
+  const start = moment(date).startOf(timeFrame);
+  const end = moment(date).endOf(timeFrame);
+  const items = await getBetweenMoments(start, end);
   
   const total = getTotalFromItems(items || []);
   

@@ -41,6 +41,8 @@ const GetRainForCurrentTimeSpan = {
     const today = moment();
     const request = Alexa.getRequest<IntentRequest>(handlerInput.requestEnvelope);
     const timespan = request.intent.slots?.timespan.value as 'year' | 'month' | 'day';
+    console.log(`RainForCurrentTimespan - ${timespan}`);
+
     const total = await getTotalForTimeFrame(today, timespan || 'year');
 
     return handlerInput.responseBuilder
@@ -58,9 +60,8 @@ const GetRainForPreviousMonth = {
   async handle(handlerInput: HandlerInput) {
     const request = Alexa.getRequest<IntentRequest>(handlerInput.requestEnvelope);
     const month = request.intent.slots?.month.value || moment().subtract(1, 'month').format('MMMM');
+    console.log(`RainForPreviousMonth - ${month}`);
     
-    console.log('month: ', month);
-
     const monthMoment = moment().month(month).startOf('month');
 
     if (monthMoment.isAfter()) {
@@ -85,7 +86,7 @@ const GetWettestTimeSpan = {
   async handle(handlerInput: HandlerInput) {
     const request = Alexa.getRequest<IntentRequest>(handlerInput.requestEnvelope);
     const timespan = request.intent.slots?.timespan.value as 'year' | 'month' | 'day';
-    console.log('timespan: ', timespan);
+    console.log(`WettestTimeSpan - ${timespan}`);
 
     const allRain = await getAllRainRecords();
 
