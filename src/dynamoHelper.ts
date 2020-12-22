@@ -78,21 +78,40 @@ export const addRain = async (spokenAmount: string) => {
   return data;
 };
 
+export const getWettestTimeSpan = async (timespan: 'year' | 'month' | 'day') => {
+  const allRain = await getAllRainRecords();
+
+  const totals = groupRecordsByTimeSpan(allRain.Items || [], timespan);
+
+  totals.sort((first, second) => second.total - first.total);
+  console.log('totals: ', totals);
+  let format = 'dddd Do MMMM YYYY';
+  switch (timespan) {
+    case 'day':
+      format = 'dddd Do MMMM YYYY';
+      break;
+    case 'month':
+      format = 'MMMM YYYY';
+      break;
+    case 'year':
+      format = 'YYYY';
+      break;
+    default:
+      format = 'dddd Do MMMM YYYY';
+      break;
+  }
+  const wettestDate = totals[0].date.format(format);
+  return { wettestDate, total: totals[0].total };
+}
+
 if (process.env.DEBUG_RAIN === 'true') {
   // getTotalForTimeFrame(moment(), 'day');
   // getTotalForTimeFrame(moment(), 'month');
   // getTotalForTimeFrame(moment(), 'year');
 
   const test = async () => {
-    const allRain = await getAllRainRecords();
-  
-      const totals = groupRecordsByTimeSpan(allRain.Items || [], 'year'); 
-      console.log('totals: ', totals);
-      
-      totals.sort((first, second) => second.total - first.total);
-  
-      const wettestDate = totals[0].date.format('dddd Do MMMM YYYY');
-      console.log('wettestDate: ', `${wettestDate} with ${totals[0].total}`);
+    const wettestResult = await getWettestTimeSpan('day');
+      console.log('wettestDate: ', `${wettestResult.wettestDate} with ${wettestResult.total}`);
   }
 
   test();

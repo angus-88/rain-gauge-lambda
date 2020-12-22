@@ -4,7 +4,7 @@ import moment from 'moment';
 
 import * as Alexa from 'ask-sdk';
 
-import { addRain, getAllRainRecords, getTotalForTimeFrame } from '../dynamoHelper';
+import { addRain, getAllRainRecords, getTotalForTimeFrame, getWettestTimeSpan } from '../dynamoHelper';
 import { groupRecordsByTimeSpan } from '../utilities';
 
 const AddRainHandler = {
@@ -46,7 +46,7 @@ const GetRainForCurrentTimeSpan = {
     const total = await getTotalForTimeFrame(today, timespan || 'year');
 
     return handlerInput.responseBuilder
-      .speak(`${timespan.includes('day') ? 'Today' : `This ${timespan}`} it has rained ${total} millimetres`)
+      .speak(`So far ${timespan.includes('day') ? 'today' : `this ${timespan}`} it has rained ${total} millimetres`)
       .reprompt('any other rain questions')
       .getResponse();
   }
@@ -88,31 +88,10 @@ const GetWettestTimeSpan = {
     const timespan = request.intent.slots?.timespan.value as 'year' | 'month' | 'day';
     console.log(`WettestTimeSpan - ${timespan}`);
 
-    const allRain = await getAllRainRecords();
-
-    const totals = groupRecordsByTimeSpan(allRain.Items || [], timespan); 
-    
-    totals.sort((first, second) => second.total - first.total);
-    console.log('totals: ', totals);
-    let format = 'dddd Do MMMM YYYY';
-    switch (timespan) {
-      case 'day':
-        format = 'dddd Do MMMM YYYY';
-        break;
-      case 'month':
-        format = 'MMMM YYYY';
-        break;
-      case 'year':
-        format = 'YYYY';
-        break;
-      default:
-        format = 'dddd Do MMMM YYYY';
-        break;
-    }
-    const wettestDate = totals[0].date.format(format);
+    const { wettestDate, total } = await getWettestTimeSpan(timespan);
 
     return handlerInput.responseBuilder
-      .speak(`The wettest ${timespan} was ${wettestDate} and it rained ${totals[0].total} millimeters`)
+      .speak(`The wettest ${timespan} was ${wettestDate} and it rained ${total} millimeters`)
       .reprompt('any other rain questions')
       .getResponse();
   }
@@ -124,3 +103,4 @@ module.exports = {
   GetRainForPreviousMonth,
   GetWettestTimeSpan,
 };
+

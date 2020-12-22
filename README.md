@@ -9,3 +9,4 @@
 - Create help section with list of commands
 - (Done) Keep app open between questions
 - Rain after holiday?
+- Automatic export to s3 and excel data source

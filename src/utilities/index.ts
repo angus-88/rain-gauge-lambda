@@ -11,6 +11,9 @@ export const groupRecordsByTimeSpan = (records: AWS.DynamoDB.DocumentClient.Item
 
   records.forEach((record) => {
     const recordMoment = moment.unix(record.date); 
+    // const timeStampMoment = moment(record.timestamp, ['DD/MM/YYYY hh:mm:ss A', 'DD/MM/YYYY HH:mm:ss']);
+
+    
     if (currentSpan && recordMoment.isSame(currentSpan, timeSpan)) {
       spanTotal += record.amount;
     } else {
