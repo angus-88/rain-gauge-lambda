@@ -99,7 +99,8 @@ const GetRainForTimespan = {
     let timeSpan: moment.unitOfTime.StartOf = 'year';
 
     const dateParts = requestDate?.split('-');
-    if (dateParts?.length === 0) {
+    console.log('dateParts: ', dateParts);
+    if (dateParts?.length === 1) {
       const year = Number.parseInt(dateParts[0]);
       /// Year or un recognised
       if (!Number.isNaN(year)) {

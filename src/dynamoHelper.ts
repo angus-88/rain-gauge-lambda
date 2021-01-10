@@ -40,7 +40,8 @@ export const getBetweenMoments = async (begin: Moment, end = moment()) => {
 };
 
 export const getTotalForTimeFrame = async (date: Moment, timeFrame: unitOfTime.StartOf) => {
-  console.log(date.format());
+  console.log('Date: ', date.toISOString())
+  console.log('timeFrame: ', timeFrame);
   const start = moment(date).startOf(timeFrame);
   const end = moment(date).endOf(timeFrame);
   const items = await getBetweenMoments(start, end);
