@@ -7,6 +7,14 @@ import * as Alexa from 'ask-sdk';
 import { addRain, getTotalForTimeFrame, getWettestTimeSpan } from '../dynamoHelper';
 import { getTotalFromItems } from '../utilities';
 
+// Set First day of week and year to UK standard
+moment.updateLocale('en', {
+  week : {
+      dow : 1,
+      doy : 4
+   }
+});
+
 const AddRainHandler = {
   canHandle(handlerInput: HandlerInput) {
     return Alexa.getRequestType(handlerInput.requestEnvelope) === 'IntentRequest'
@@ -32,60 +40,15 @@ const AddRainHandler = {
   }
 };
 
-const GetRainForCurrentTimeSpan = {
-  canHandle(handlerInput: HandlerInput) {
-    return Alexa.getRequestType(handlerInput.requestEnvelope) === 'IntentRequest'
-      && Alexa.getIntentName(handlerInput.requestEnvelope) === 'RainForTimeSpan';
-  },
-  async handle(handlerInput: HandlerInput) {
-    const today = moment();
-    const request = Alexa.getRequest<IntentRequest>(handlerInput.requestEnvelope);
-    const timespan = request.intent.slots?.timespan.value as 'year' | 'month' | 'day';
-    console.log(`RainForCurrentTimespan - ${timespan}`);
+/*
+  2020
+  last week
+  2020-W55
+  2020-10
+  2020-10-25
 
-    const total = await getTotalForTimeFrame(today, timespan || 'year');
-
-    return handlerInput.responseBuilder
-      .speak(`So far ${timespan.includes('day') ? 'today' : `this ${timespan}`} it has rained ${total} millimetres`)
-      .reprompt('any other rain questions')
-      .getResponse();
-  }
-};
-
-const GetRainForPreviousMonth = {
-  canHandle(handlerInput: HandlerInput) {
-    return Alexa.getRequestType(handlerInput.requestEnvelope) === 'IntentRequest'
-      && Alexa.getIntentName(handlerInput.requestEnvelope) === 'RainForPreviousMonth';
-  },
-  async handle(handlerInput: HandlerInput) {
-    const request = Alexa.getRequest<IntentRequest>(handlerInput.requestEnvelope);
-    const month = request.intent.slots?.month.value || moment().subtract(1, 'month').format('MMMM');
-    console.log(`RainForPreviousMonth - ${month}`);
-    
-    const monthMoment = moment().month(month).startOf('month');
-
-    if (monthMoment.isAfter()) {
-      monthMoment.subtract(1, 'year');
-    }
-
-    console.log('monthMoment: ', monthMoment.toISOString());
-    const total = await getTotalForTimeFrame(monthMoment, 'month');
-
-    return handlerInput.responseBuilder
-      .speak(`The total in ${month} ${monthMoment.format('YYYY')} was ${total} millimetres`)
-      .reprompt('any other rain questions')
-      .getResponse();
-  }
-}
-
+*/
 const GetRainForTimespan = {
-  /*
-    2020
-    last week
-    2020-W55
-    2020-10
-    2020-10-25
-  */
   canHandle(handlerInput: HandlerInput) {
     return Alexa.getRequestType(handlerInput.requestEnvelope) === 'IntentRequest'
       && Alexa.getIntentName(handlerInput.requestEnvelope) === 'RainForPreviousTimeSpan';
@@ -97,6 +60,7 @@ const GetRainForTimespan = {
 
     const dateMoment = moment();
     let timeSpan: moment.unitOfTime.StartOf = 'year';
+    let preamble = 'The total so far this year is '
 
     const dateParts = requestDate?.split('-');
     console.log('dateParts: ', dateParts);
@@ -108,14 +72,16 @@ const GetRainForTimespan = {
         dateMoment.year(year);
         console.log(`get total for ${year}`);
         timeSpan = 'year';
+        preamble = `the total for ${year} is `
       } else {
          // NaN
         if (dateParts[0] === 'last week') {
           dateMoment.subtract(1, 'week');
           timeSpan = 'week';
           console.log(`get total for last week`);
+          preamble = `last week it rained `
+        }
       }
-       }
     } else if (dateParts?.length === 2) {
       const year = Number.parseInt(dateParts[0]);
       dateMoment.year(year);        
@@ -126,13 +92,20 @@ const GetRainForTimespan = {
         const weekNumber = Number.parseInt(dateParts[1].slice(1));
         console.log(`week number ${weekNumber}`);
 
-        dateMoment.weekYear(weekNumber);
+        dateMoment.isoWeek(weekNumber);
         timeSpan = 'week';
+        preamble = `in week ${weekNumber} it rained `
       } else {
         // Month
         const month = Number.parseInt(dateParts[1]);
         dateMoment.month(month - 1); // Moment months are indexed from 0, so april = 3
+
+        if (dateMoment.isAfter()) {
+          dateMoment.subtract(1, 'year');
+        }
+
         timeSpan = 'month';
+        preamble = `the total for ${dateMoment.format('MMMM')} ${dateMoment.year()} is `
         console.log(`get total for ${dateMoment.format('MMMM YYYY')}`);
       }
     } else if (dateParts?.length === 3) {
@@ -146,15 +119,24 @@ const GetRainForTimespan = {
       console.log('Parsed Moment: ', dateMoment.toISOString());
 
       timeSpan = 'day';
+      preamble = `the total for ${dateMoment.calendar()} is `
     }
 
-    const total = await getTotalForTimeFrame(dateMoment, timeSpan);
+    let response = '';
+    try {
 
+      const total = await getTotalForTimeFrame(dateMoment, timeSpan);
+
+      response = `${preamble} ${total}`;
+    } catch (e) {
+      response = `Sorry there was an error, ${e.message}`;
+    }
+      
     return handlerInput.responseBuilder
-      .speak(`The total is ${total}`)
-      .reprompt('any other rain questions')
-      .getResponse();
-  }
+    .speak(response)
+    .reprompt('any other rain questions')
+    .getResponse();
+    }
 }
 
 const GetWettestTimeSpan = {
@@ -178,8 +160,6 @@ const GetWettestTimeSpan = {
 
 module.exports = {
   AddRainHandler,
-  GetRainForCurrentTimeSpan,
-  GetRainForPreviousMonth,
   GetWettestTimeSpan,
   GetRainForTimespan,
 };

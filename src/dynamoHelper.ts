@@ -3,6 +3,14 @@ import * as AWS from 'aws-sdk';
 import { getTotalFromItems, groupRecordsByTimeSpan } from './utilities';
 const documentClient = new AWS.DynamoDB.DocumentClient();
 
+// Set First day of week and year to UK standard
+moment.updateLocale('en', {
+  week : {
+      dow : 1,
+      doy : 4
+   }
+});
+
 let TABLE_NAME = 'rain-gauge';
 if (process.env.RAIN_ENV === 'dev') {
   console.log('Using dev table');
@@ -44,6 +52,11 @@ export const getTotalForTimeFrame = async (date: Moment, timeFrame: unitOfTime.S
   console.log('timeFrame: ', timeFrame);
   const start = moment(date).startOf(timeFrame);
   const end = moment(date).endOf(timeFrame);
+
+  if (start.isAfter()) {
+    throw new Error('I cannot predict the rain');
+  }
+
   const items = await getBetweenMoments(start, end);
   
   const total = getTotalFromItems(items || []);
@@ -109,7 +122,7 @@ if (process.env.DEBUG_RAIN === 'true') {
   // getTotalForTimeFrame(moment(), 'day');
   // getTotalForTimeFrame(moment(), 'month');
   // getTotalForTimeFrame(moment(), 'year');
-
+  console.log(moment.locale());
   const test = async () => {
     const wettestResult = await getWettestTimeSpan('day');
       console.log('wettestDate: ', `${wettestResult.wettestDate} with ${wettestResult.total}`);
