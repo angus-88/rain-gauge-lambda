@@ -5,7 +5,7 @@ import moment from 'moment';
 import * as Alexa from 'ask-sdk';
 
 import { addRain, getTotalForTimeFrame, getWettestTimeSpan } from '../dynamoHelper';
-import { getTotalFromItems } from '../utilities';
+import { getTotalFromItems, isParseDateError, parseDateSlot } from '../utilities';
 
 // Set First day of week and year to UK standard
 moment.updateLocale('en', {
@@ -93,8 +93,9 @@ const GetRainForTimespan = {
         console.log(`week number ${weekNumber}`);
 
         dateMoment.isoWeek(weekNumber);
+        const weekBeginning = moment(dateMoment).startOf('week').format('Do MMMM YYYY');
         timeSpan = 'week';
-        preamble = `in week ${weekNumber} it rained `
+        preamble = `in week starting ${weekBeginning} it rained `
       } else {
         // Month
         const month = Number.parseInt(dateParts[1]);
@@ -127,7 +128,7 @@ const GetRainForTimespan = {
 
       const total = await getTotalForTimeFrame(dateMoment, timeSpan);
 
-      response = `${preamble} ${total}`;
+      response = `${preamble} ${total} millimetres`;
     } catch (e) {
       response = `Sorry there was an error, ${e.message}`;
     }
@@ -147,14 +148,41 @@ const GetWettestTimeSpan = {
   async handle(handlerInput: HandlerInput) {
     const request = Alexa.getRequest<IntentRequest>(handlerInput.requestEnvelope);
     const timespan = request.intent.slots?.timespan.value as 'year' | 'month' | 'day';
-    console.log(`WettestTimeSpan - ${timespan}`);
+    const dateSlot = request.intent.slots?.dateRange.value;
 
-    const { wettestDate, total } = await getWettestTimeSpan(timespan);
+    const dateSlotValue = parseDateSlot(dateSlot || '');
+    
+    if (isParseDateError(dateSlotValue)) {
+      console.log(`WettestTimeSpan - ${timespan} on record`)
+      const { wettestDate, total } = await getWettestTimeSpan(timespan);
 
-    return handlerInput.responseBuilder
-      .speak(`The wettest ${timespan} was ${wettestDate} and it rained ${total} millimeters`)
+      return handlerInput.responseBuilder
+      .speak(`The wettest ${timespan} on record was ${wettestDate} and it rained ${total} millimeters`)
       .reprompt('any other rain questions')
       .getResponse();
+    } else {
+      const {dateMoment, timeSpan: dateRange} = dateSlotValue;
+      if (timespan === dateRange || dateRange === 'day') {
+        return handlerInput.responseBuilder
+        .speak(`That makes no sense, I can't find the wettest ${timespan} for a ${dateRange}`)
+        .reprompt('any other rain questions')
+        .getResponse();  
+      }
+
+      console.log(`WettestTimeSpan - ${timespan} in ${dateRange} from ${dateMoment.format('YYYY MMMM')}`);
+      const { total, wettestDate} = await getWettestTimeSpan(timespan, dateMoment, dateRange);
+
+      let outputDateRange = dateMoment.format('YYYY');
+      if (dateRange === 'month') {
+        outputDateRange = dateMoment.format('MMMM YYYY');
+      }
+      
+      return handlerInput.responseBuilder
+      .speak(`The wettest ${timespan} in ${outputDateRange} was ${wettestDate} and it rained ${total} millimetres`)
+      .reprompt('any other rain questions')
+      .getResponse();
+    }
+    
   }
 }
 

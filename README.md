@@ -5,8 +5,10 @@
 # TODO
 - (Done) Keep app open between questions
 - (Done) Wettest Day / Month / Year ever
-- Wettest Month / Day for given year
+- (Done) Wettest Month / Day for given year / month
 - Longest and current dry/wet spell
 - Getting records across multiple years e.g. winter
 - Get totals for seasons
 - Download New data and add to csv file
+- Can compare years in months for wettest timespan - contextual bug
+- Output verbose for wettest timespan e.g. month in year, day in month /year, week

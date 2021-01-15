@@ -19,15 +19,29 @@ if (process.env.RAIN_ENV === 'dev') {
   console.log('Using prod table');
 }
 
-export const getAllRainRecords = async () => {
+export const getAllRainRecords = async (year?: number): Promise<AWS.DynamoDB.DocumentClient.ItemList> => {
+  if (year) {
+    const data = await documentClient.query({
+      TableName: TABLE_NAME,
+      KeyConditions: {
+        year: {
+          ComparisonOperator: 'EQ',
+          AttributeValueList: [year]
+        }
+      }
+    }).promise();
+
+    return data.Items || [];
+  }
+
   const data = await documentClient.scan({
     TableName: TABLE_NAME,
   }).promise();
 
-  return data;
+  return data.Items || [];
 };
 
-export const getBetweenMoments = async (begin: Moment, end = moment()) => {
+export const getBetweenMoments = async (begin: Moment, end = moment()): Promise<AWS.DynamoDB.DocumentClient.ItemList> => {
   const data = await documentClient.query({
     TableName: TABLE_NAME,
     KeyConditions: {
@@ -44,7 +58,7 @@ export const getBetweenMoments = async (begin: Moment, end = moment()) => {
 
   console.log(`Found ${data.Count} rain entries between ${begin.toISOString()} and ${end.toISOString()}`);
   
-  return data.Items;
+  return data.Items || [];
 };
 
 export const getTotalForTimeFrame = async (date: Moment, timeFrame: unitOfTime.StartOf) => {
@@ -92,10 +106,26 @@ export const addRain = async (spokenAmount: string) => {
   return data;
 };
 
-export const getWettestTimeSpan = async (timespan: 'year' | 'month' | 'day') => {
-  const allRain = await getAllRainRecords();
+interface GetWettestTimeSpan {
+  (timespan: 'year' | 'month' | 'day'): Promise<{ wettestDate: string, total: number}>;
+  (timespan: 'year' | 'month' | 'day', dateMoment: Moment, dateRange: unitOfTime.StartOf): Promise<{ wettestDate: string, total: number}>;
+};
 
-  const totals = groupRecordsByTimeSpan(allRain.Items || [], timespan);
+export const getWettestTimeSpan: GetWettestTimeSpan = async (timespan: 'year' | 'month' | 'day', dateMoment?: Moment, dateRange?: unitOfTime.StartOf) => {
+
+  let allRain: AWS.DynamoDB.DocumentClient.ItemList | undefined;
+  if (dateMoment && dateRange === 'year') {
+    allRain = await getAllRainRecords(dateMoment.year()) 
+  } else if (dateMoment && dateRange) {
+    const startMoment = moment(dateMoment).startOf(dateRange);
+    const endMoment = moment(dateMoment).endOf(dateRange);
+    allRain = await getBetweenMoments(startMoment, endMoment);
+  } else {
+    allRain = await getAllRainRecords();
+  }
+
+
+  const totals = groupRecordsByTimeSpan(allRain, timespan);
 
   totals.sort((first, second) => second.total - first.total);
   console.log('totals: ', totals);
@@ -124,7 +154,7 @@ if (process.env.DEBUG_RAIN === 'true') {
   // getTotalForTimeFrame(moment(), 'year');
   console.log(moment.locale());
   const test = async () => {
-    const wettestResult = await getWettestTimeSpan('day');
+    const wettestResult = await getWettestTimeSpan('day', moment(), 'year');
       console.log('wettestDate: ', `${wettestResult.wettestDate} with ${wettestResult.total}`);
   }
 
