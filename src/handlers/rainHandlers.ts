@@ -58,75 +58,57 @@ const GetRainForTimespan = {
     const requestDate = request.intent.slots?.date.value;
     console.log('requestDate: ', requestDate);
 
-    const dateMoment = moment();
-    let timeSpan: moment.unitOfTime.StartOf = 'year';
-    let preamble = 'The total so far this year is '
-
-    const dateParts = requestDate?.split('-');
-    console.log('dateParts: ', dateParts);
-    if (dateParts?.length === 1) {
-      const year = Number.parseInt(dateParts[0]);
-      /// Year or un recognised
-      if (!Number.isNaN(year)) {
-        // Year
-        dateMoment.year(year);
-        console.log(`get total for ${year}`);
-        timeSpan = 'year';
-        preamble = `the total for ${year} is `
-      } else {
-         // NaN
-        if (dateParts[0] === 'last week') {
-          dateMoment.subtract(1, 'week');
-          timeSpan = 'week';
-          console.log(`get total for last week`);
-          preamble = `last week it rained `
-        }
-      }
-    } else if (dateParts?.length === 2) {
-      const year = Number.parseInt(dateParts[0]);
-      dateMoment.year(year);        
-
-      // Week or Month
-      if (dateParts[1].startsWith('W')) {
-        // Week
-        const weekNumber = Number.parseInt(dateParts[1].slice(1));
-        console.log(`week number ${weekNumber}`);
-
-        dateMoment.isoWeek(weekNumber);
-        const weekBeginning = moment(dateMoment).startOf('week').format('Do MMMM YYYY');
-        timeSpan = 'week';
-        preamble = `in week starting ${weekBeginning} it rained `
-      } else {
-        // Month
-        const month = Number.parseInt(dateParts[1]);
-        dateMoment.month(month - 1); // Moment months are indexed from 0, so april = 3
-
-        if (dateMoment.isAfter()) {
-          dateMoment.subtract(1, 'year');
-        }
-
-        timeSpan = 'month';
-        preamble = `the total for ${dateMoment.format('MMMM')} ${dateMoment.year()} is `
-        console.log(`get total for ${dateMoment.format('MMMM YYYY')}`);
-      }
-    } else if (dateParts?.length === 3) {
-      // Exact date
-      dateMoment.set({ 
-        year: Number.parseInt(dateParts[0]),
-        month: Number.parseInt(dateParts[1]) -1,
-        date: Number.parseInt(dateParts[2]),
-      })
-
-      console.log('Parsed Moment: ', dateMoment.toISOString());
-
-      timeSpan = 'day';
-      preamble = `the total for ${dateMoment.calendar()} is `
-    }
-
     let response = '';
     try {
+      const result = parseDateSlot(requestDate || '')
+      if (isParseDateError(result)) {
+        throw new Error(result.error);
+      }
+      const { dateMoment, timeSpan } = result;
+      const now = moment();
+      
+      const sameYear = now.year() === result.dateMoment.year();
+      const sameMonth = now.month() === result.dateMoment.month();
+      const sameWeek = now.isoWeek() === result.dateMoment.isoWeek();
+      const sameDay = now.dayOfYear() === result.dateMoment.dayOfYear();
+      
+      let preamble = ''
+      switch (result.timeSpan) {
+        case 'day':
+          if (sameDay) {
+            preamble = 'so far today it has rained'; 
+          } else {
+            preamble = `${dateMoment.calendar()} it rained`
+          }
+          break;
+        case 'week':
+          if (sameYear && sameWeek) {
+            preamble = 'so far this week it has rained';
+          } else {
+            preamble = 'last week it rained '
+          }
+          break;
+        case 'month':
+          if (sameYear && sameMonth) {
+            preamble = 'this month it has rained'
+          } else if (sameYear && !sameMonth) {
+            preamble = `in ${dateMoment.format('MMMM')} it rained`;
+          } else {
+            preamble = ` in ${dateMoment.format('MMMM YYYY')} it rained`;
+          }
+          break;
+        case 'year':
+          if (sameYear) {
+            preamble = 'so far this year it has rained';
+          } else {
+            preamble = `in ${result.dateMoment.year()} it rained `;
+          }
+          break;
+        default:
+          break;
+      }
 
-      const total = await getTotalForTimeFrame(dateMoment, timeSpan);
+      const total = await getTotalForTimeFrame(result.dateMoment, result.timeSpan);
 
       response = `${preamble} ${total} millimetres`;
     } catch (e) {

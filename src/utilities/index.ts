@@ -35,6 +35,7 @@ export const isParseDateError = (parseResult: ParseDateError | ParseDateSuccess)
 }
 export type ParseDateSuccess = { timeSpan: moment.unitOfTime.StartOf, dateMoment: Moment }
 export type ParseDateError = { error: string }
+
 export const parseDateSlot = (requestDate: string): ParseDateSuccess | ParseDateError => {
   const dateMoment = moment();
   let timeSpan: moment.unitOfTime.StartOf = 'year';
