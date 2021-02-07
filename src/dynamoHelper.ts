@@ -107,8 +107,8 @@ export const addRain = async (spokenAmount: string) => {
 };
 
 interface GetWettestTimeSpan {
-  (timespan: 'year' | 'month' | 'day'): Promise<{ wettestDate: string, total: number}>;
-  (timespan: 'year' | 'month' | 'day', dateMoment: Moment, dateRange: unitOfTime.StartOf): Promise<{ wettestDate: string, total: number}>;
+  (timespan: 'year' | 'month' | 'day'): Promise<{ wettestDate: string, total: number, wettestMoment: Moment }>;
+  (timespan: 'year' | 'month' | 'day', dateMoment: Moment, dateRange: unitOfTime.StartOf): Promise<{ wettestDate: string, total: number, wettestMoment: Moment}>;
 };
 
 export const getWettestTimeSpan: GetWettestTimeSpan = async (timespan: 'year' | 'month' | 'day', dateMoment?: Moment, dateRange?: unitOfTime.StartOf) => {
@@ -145,7 +145,7 @@ export const getWettestTimeSpan: GetWettestTimeSpan = async (timespan: 'year' | 
       break;
   }
   const wettestDate = totals[0].date.format(format);
-  return { wettestDate, total: totals[0].total };
+  return { wettestDate, total: totals[0].total, wettestMoment: totals[0].date };
 }
 
 if (process.env.DEBUG_RAIN === 'true') {

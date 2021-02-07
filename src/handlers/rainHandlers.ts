@@ -144,7 +144,11 @@ const GetWettestTimeSpan = {
       .getResponse();
     } else {
       const {dateMoment, timeSpan: dateRange} = dateSlotValue;
-      if (timespan === dateRange || dateRange === 'day') {
+      if (
+        timespan === dateRange || 
+        dateRange === 'day' || 
+        timespan === 'year' 
+      ) {
         return handlerInput.responseBuilder
         .speak(`That makes no sense, I can't find the wettest ${timespan} for a ${dateRange}`)
         .reprompt('any other rain questions')
@@ -152,15 +156,37 @@ const GetWettestTimeSpan = {
       }
 
       console.log(`WettestTimeSpan - ${timespan} in ${dateRange} from ${dateMoment.format('YYYY MMMM')}`);
-      const { total, wettestDate} = await getWettestTimeSpan(timespan, dateMoment, dateRange);
+      const { total, wettestDate, wettestMoment } = await getWettestTimeSpan(timespan, dateMoment, dateRange);
 
       let outputDateRange = dateMoment.format('YYYY');
-      if (dateRange === 'month') {
-        outputDateRange = dateMoment.format('MMMM YYYY');
+      let outputDate = wettestMoment.format('YYYY');
+      if (dateRange === 'year') {
+        if (dateMoment.year() === moment().year()) {
+          outputDateRange = 'this year';
+          if (timespan === 'day') {
+            outputDate = wettestMoment.format('dddd Do MMMM');
+          } else {
+            outputDate = wettestMoment.format('MMMM');
+          }
+        } else {
+          outputDateRange = `in ${dateMoment.format('YYYY')}`;
+          if (timespan === 'day') {
+            outputDate = wettestMoment.format('dddd Do MMMM YYYY');
+          } else {
+            outputDate = wettestMoment.format('MMMM YYYY');
+          }
+        }
+      } else if (dateRange === 'month') {
+        outputDate = wettestMoment.format('dddd Do');
+        if (dateMoment.year() === moment().year() && dateMoment.month() === moment().month()) {
+          outputDateRange = 'this month'
+        } else {
+          outputDateRange = `in ${dateMoment.format('MMMM YYYY')}`;
+        }
       }
       
       return handlerInput.responseBuilder
-      .speak(`The wettest ${timespan} in ${outputDateRange} was ${wettestDate} and it rained ${total} millimetres`)
+      .speak(`The wettest ${timespan} ${outputDateRange} was ${outputDate} and it rained ${total} millimetres`)
       .reprompt('any other rain questions')
       .getResponse();
     }
