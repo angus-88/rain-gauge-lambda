@@ -3,6 +3,13 @@ import * as AWS from 'aws-sdk';
 import { getTotalFromItems, groupRecordsByTimeSpan } from './utilities';
 const documentClient = new AWS.DynamoDB.DocumentClient();
 
+interface RainEntry {
+  year: number;
+  date: number;
+  amount: number;
+  timestamp: string;
+}
+
 // Set First day of week and year to UK standard
 moment.updateLocale('en', {
   week : {
@@ -19,7 +26,7 @@ if (process.env.RAIN_ENV === 'dev') {
   console.log('Using prod table');
 }
 
-export const getAllRainRecords = async (year?: number): Promise<AWS.DynamoDB.DocumentClient.ItemList> => {
+export const getAllRainRecords = async (year?: number): Promise<RainEntry[]> => {
   if (year) {
     const data = await documentClient.query({
       TableName: TABLE_NAME,
@@ -31,17 +38,17 @@ export const getAllRainRecords = async (year?: number): Promise<AWS.DynamoDB.Doc
       }
     }).promise();
 
-    return data.Items || [];
+    return data.Items as RainEntry[] || [];
   }
 
   const data = await documentClient.scan({
     TableName: TABLE_NAME,
   }).promise();
 
-  return data.Items || [];
+  return data.Items as RainEntry[] || [];
 };
 
-export const getBetweenMoments = async (begin: Moment, end = moment()): Promise<AWS.DynamoDB.DocumentClient.ItemList> => {
+export const getBetweenMoments = async (begin: Moment, end = moment()): Promise<RainEntry[]> => {
   const data = await documentClient.query({
     TableName: TABLE_NAME,
     KeyConditions: {
@@ -58,7 +65,7 @@ export const getBetweenMoments = async (begin: Moment, end = moment()): Promise<
 
   console.log(`Found ${data.Count} rain entries between ${begin.toISOString()} and ${end.toISOString()}`);
   
-  return data.Items || [];
+  return data.Items as RainEntry[] || [];
 };
 
 export const getTotalForTimeFrame = async (date: Moment, timeFrame: unitOfTime.StartOf) => {

@@ -9,6 +9,8 @@
 - Longest and current dry/wet spell
 - Getting records across multiple years e.g. winter
 - Get totals for seasons
-- Download New data and add to csv file
-- Can compare years in months for wettest timespan - contextual bug
+- (Done) Download New data and add to csv file
+- (Done) Can compare years in months for wettest timespan - contextual bug
 - Output verbose for wettest timespan e.g. month in year, day in month /year, week
+- Only download new records when updating local csv file
+- Download script only works in debug

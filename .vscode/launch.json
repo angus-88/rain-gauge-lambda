@@ -7,6 +7,22 @@
     {
       "type": "node",
       "request": "launch",
+      "name": "Download",
+      "runtimeArgs": [
+        "-r",
+        "ts-node/register"
+      ],
+      "args": [
+        "${workspaceFolder}/download.ts"
+      ],
+      "env": {
+        "TS_NODE_PROJECT": "${workspaceFolder}/tsconfig.json",
+        "RAIN_ENV": "prod"
+      }
+    },
+    {
+      "type": "node",
+      "request": "launch",
       "name": "Dynamo Helper",
       "runtimeArgs": [
         "-r",
