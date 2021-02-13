@@ -1,7 +1,7 @@
 import moment, { Moment, unitOfTime } from 'moment';
 import * as AWS from 'aws-sdk';
 import { getTotalFromItems, groupRecordsByTimeSpan } from './utilities';
-const documentClient = new AWS.DynamoDB.DocumentClient();
+const documentClient = new AWS.DynamoDB.DocumentClient({ region: 'eu-west-2' });
 
 interface RainEntry {
   year: number;
@@ -26,16 +26,25 @@ if (process.env.RAIN_ENV === 'dev') {
   console.log('Using prod table');
 }
 
-export const getAllRainRecords = async (year?: number): Promise<RainEntry[]> => {
-  if (year) {
+export const getAllRainRecords = async (date?: number): Promise<RainEntry[]> => {
+  if (date?.toString().length === 4) {
     const data = await documentClient.query({
       TableName: TABLE_NAME,
       KeyConditions: {
         year: {
           ComparisonOperator: 'EQ',
-          AttributeValueList: [year]
+          AttributeValueList: [date]
         }
       }
+    }).promise();
+
+    return data.Items as RainEntry[] || [];
+  } else if (date && moment.unix(date).isValid()) {
+    const data = await documentClient.scan({
+      TableName: TABLE_NAME,
+      FilterExpression: '#d > :d',
+      ExpressionAttributeValues: { ':d': date },
+      ExpressionAttributeNames: { '#d':'date'},
     }).promise();
 
     return data.Items as RainEntry[] || [];
