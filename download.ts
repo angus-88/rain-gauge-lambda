@@ -2,7 +2,7 @@ import fs from 'fs';
 import moment from 'moment';
 import { getAllRainRecords } from './src/dynamoHelper';
 
-const LOCATION = 'angus/Desktop/rain-gauge-data.csv'
+const LOCATION = 'angus/OneDrive/Desktop/rain-gauge-data.csv'
 const FILE_PATH = `/mnt/c/Users/${LOCATION}`;
 
 console.log('Collecting latest rain records from DynamoDB');
